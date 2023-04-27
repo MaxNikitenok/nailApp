@@ -10,6 +10,7 @@ export const Main = ({ navigation }: any) => {
     <View style={styles.main}>
       <Text style={styles.menuItem} onPress={()=>navigation.navigate('Calendar')}>Календарь</Text>
       <Text style={styles.menuItem} onPress={()=>navigation.navigate('AddReception')}>Добавить запись</Text>
+      <Text style={styles.menuItem} onPress={()=>navigation.navigate('Calendar2')}>Календарь 2</Text>
     </View>
   );
 }

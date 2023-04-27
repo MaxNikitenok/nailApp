@@ -5,6 +5,7 @@ import { Day } from './Day';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { AddReception } from './AddReception';
+import { CalendarMonth } from './CalendarMonth';
 
 const Stack = createStackNavigator();
 
@@ -26,6 +27,11 @@ export default function Navigate() {
           name="AddReception"
           component={AddReception}
           options={{ title: 'Добавление записи' }}
+        />
+        <Stack.Screen
+          name="Calendar2"
+          component={CalendarMonth}
+          options={{ title: 'Календарь 2' }}
         />
         <Stack.Screen name="Day" component={Day} options={{ title: 'День' }} />
       </Stack.Navigator>

@@ -30,9 +30,8 @@ export const AddReception = ({ navigation }: any) => {
 
   const handleConfirm = (date: any) => {
     setReceptionDate(date);
-    console.warn('A date has been picked: ', date.toString());
 
-    hideDatePicker();
+     hideDatePicker();
   };
 
   const addReception = async () => {
@@ -49,7 +48,8 @@ export const AddReception = ({ navigation }: any) => {
         .post(
           'http://192.168.0.111:4999/receptions/',
           JSON.stringify({
-            dateTime: receptionDate,
+            date: new Date(receptionDate).toJSON().slice(0, 10),
+            time: receptionDate.toString().slice(-17, -12),
             name: clientName,
             procedures: selected.join(', '),
           }),
