@@ -31,7 +31,7 @@ export const AddReception = ({ navigation }: any) => {
   const handleConfirm = (date: any) => {
     setReceptionDate(date);
 
-     hideDatePicker();
+    hideDatePicker();
   };
 
   const addReception = async () => {
@@ -61,7 +61,7 @@ export const AddReception = ({ navigation }: any) => {
         )
         .then((response) => {
           Alert.alert(
-            `${response.data.name} записана на ${response.data.procedures} ${response.data.dateTime}`
+            `${response.data.name} записана на ${response.data.procedures} ${response.data.date} в ${response.data.time}`
           );
         });
     } catch (e) {
@@ -72,91 +72,117 @@ export const AddReception = ({ navigation }: any) => {
   const DATA = [
     { label: 'Маникюр', value: 'Маникюр' },
     { label: 'Педикюр', value: 'Педикюр' },
-    { label: 'Укорачивание пальцев', value: 'Укорачивание пальцев' },
-    { label: 'Наращивание пальцев', value: 'Наращивание пальцев' },
+    { label: 'Коррекция', value: 'Коррекция' },
   ];
 
-  
-
-  const renderDataItem = (item: {
-    label:
-      | string
-      | number
-      | boolean
-      | React.ReactElement<any, string | React.JSXElementConstructor<any>>
-      | React.ReactFragment
-      | React.ReactPortal
-      | null
-      | undefined;
-  }) => {
+  const renderDataItem = (item: { label: string }) => {
     return (
       <View style={styles.item}>
         <Text style={styles.selectedTextStyle}>{item.label}</Text>
-        <AntDesign style={styles.icon} color="black" name="Safety" size={20} />
+        {selected.includes(item.label) ? (
+          <AntDesign
+            style={styles.icon}
+            color="green"
+            name="checkcircleo"
+            size={20}
+          />
+        ) : (
+          <AntDesign
+            style={styles.icon}
+            color="black"
+            name="minuscircleo"
+            size={20}
+          />
+        )}
       </View>
     );
   };
 
+  let ye = '';
+  let mo = '';
+  let da = '';
+  let ho = '';
+  let mi = '';
+
+  if (receptionDate) {
+    let d = new Date(receptionDate.toString());
+    ye = new Intl.DateTimeFormat('ru', { year: 'numeric' }).format(d);
+    mo = new Intl.DateTimeFormat('ru', { month: 'long' }).format(d);
+    da = new Intl.DateTimeFormat('ru', { day: 'numeric' }).format(d);
+    ho = new Intl.DateTimeFormat('ru', { hour: 'numeric' }).format(d);
+    mi = new Intl.DateTimeFormat('ru', { minute: 'numeric' }).format(d);
+  }
+
   return (
-    <View style={styles.addDateWrapper}>
-      <View style={styles.addDate}>
-        <Button title="Выбрать дату" onPress={showDatePicker} />
-        <DateTimePickerModal
-          isVisible={isDatePickerVisible}
-          mode="datetime"
-          onConfirm={handleConfirm}
-          onCancel={hideDatePicker}
-        />
-      </View>
-
+    <>
       <View>
-        <TextInput
-          style={styles.input}
-          onChangeText={onChangeClientName}
-          value={clientName}
-        />
+        <Text>Имя: {clientName}</Text>
+        <Text>Дата: {`${da} ${mo} ${ye}`}</Text>
+        <Text>Время: {`${ho}:${mi}`}</Text>
+        <Text>Процедуры: {selected}</Text>
       </View>
+      <View style={styles.addDateWrapper}>
+        <View>
+          <Button title="Выбрать дату" onPress={showDatePicker} />
+          <DateTimePickerModal
+            isVisible={isDatePickerVisible}
+            mode="datetime"
+            onConfirm={handleConfirm}
+            onCancel={hideDatePicker}
+            is24Hour={true}
+          />
+        </View>
 
-      <View style={styles.container}>
-        <MultiSelect
-          style={styles.dropdown}
-          placeholderStyle={styles.placeholderStyle}
-          selectedTextStyle={styles.selectedTextStyle}
-          inputSearchStyle={styles.inputSearchStyle}
-          iconStyle={styles.iconStyle}
-          data={DATA}
-          labelField="label"
-          valueField="value"
-          placeholder="Выбрать процедуры"
-          value={selected}
-          search
-          searchPlaceholder="Search..."
-          onChange={(item) => {
-            setSelected(item);
-          }}
-          renderLeftIcon={() => (
-            <AntDesign
-              style={styles.icon}
-              color="black"
-              name="Safety"
-              size={20}
-            />
-          )}
-          renderItem={renderDataItem}
-          renderSelectedItem={(item, unSelect) => (
-            <TouchableOpacity onPress={() => unSelect && unSelect(item)}>
-              <View style={styles.selectedStyle}>
-                <Text style={styles.textSelectedStyle}>{item.label}</Text>
-                <AntDesign color="black" name="delete" size={17} />
-              </View>
-            </TouchableOpacity>
-          )}
-        />
-        <StatusBar />
+        <View>
+          <TextInput
+            style={styles.input}
+            onChangeText={onChangeClientName}
+            value={clientName}
+            placeholder="Имя клиента"
+          />
+        </View>
+
+        <View style={styles.container}>
+          <MultiSelect
+            style={styles.dropdown}
+            placeholderStyle={styles.placeholderStyle}
+            selectedTextStyle={styles.selectedTextStyle}
+            inputSearchStyle={styles.inputSearchStyle}
+            iconStyle={styles.iconStyle}
+            data={DATA}
+            labelField="label"
+            valueField="value"
+            placeholder="Выбрать процедур"
+            value={selected}
+            search
+            searchPlaceholder="Поиск..."
+            onChange={(item) => {
+              setSelected(item);
+            }}
+            renderLeftIcon={() => (
+              <AntDesign
+                style={styles.icon}
+                color="black"
+                name="filetext1"
+                size={20}
+              />
+            )}
+            renderItem={renderDataItem}
+            renderSelectedItem={(item, unSelect) => (
+              <TouchableOpacity onPress={() => unSelect && unSelect(item)}>
+                <View style={styles.selectedStyle}>
+                  <Text style={styles.textSelectedStyle}>{item.label}</Text>
+                  <AntDesign color="red" name="delete" size={17} />
+                </View>
+              </TouchableOpacity>
+            )}
+          />
+          <StatusBar />
+        </View>
+
+        <Button title="Добавить запись" onPress={addReception} />
       </View>
-
-      <Button title="Добавить запись" onPress={addReception} />
-    </View>
+    </>
   );
 };
 
@@ -165,23 +191,24 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-around',
   },
-  addDate: {},
   input: {
-    borderWidth: 1,
+    borderWidth: 0,
     padding: 5,
     marginLeft: 40,
     marginRight: 40,
+    fontSize: 16,
   },
 
   container: {
-    backgroundColor: '#37d5d2a2',
+    backgroundColor: '#37d5d212',
     paddingTop: 30,
     flex: 1,
+    padding: 5,
   },
   dropdown: {
     height: 50,
     backgroundColor: 'white',
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 12,
     shadowColor: '#000',
     shadowOffset: {
@@ -220,7 +247,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 14,
+    borderRadius: 8,
     backgroundColor: 'white',
     shadowColor: '#000',
     marginTop: 8,

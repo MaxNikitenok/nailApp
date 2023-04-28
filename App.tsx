@@ -4,13 +4,6 @@ import { StyleSheet, Text, View, Button, Alert } from 'react-native';
 import MainStack from './navigate';
 
 export default function App() {
-  const pressHandler = () => {
-    Alert.alert('Молодец', 'Как дела?', [
-      { text: 'Ок', onPress: () => Alert.alert('Cупер') },
-      { text: 'Так себе', onPress: () => Alert.alert('Лошара') },
-    ]);
-  };
-
   return <MainStack />;
 }
 
