@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { StyleSheet, View, Text, Button, TextInput, Alert, Image, ImageBackground } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Text,
+  Button,
+  TextInput,
+  Alert,
+  ImageBackground,
+} from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { Select } from './components/Select';
 
@@ -76,7 +84,6 @@ export const AddReception = ({ navigation }: any) => {
 
   return (
     <View style={styles.container}>
-      <ImageBackground source={require('./assets/background_1.png')} resizeMode="cover" style={styles.image}>
       <View style={styles.previewBlock}>
         <View style={styles.item}>
           <Text style={styles.text}>Имя:</Text>
@@ -124,12 +131,17 @@ export const AddReception = ({ navigation }: any) => {
           is24Hour={true}
         />
       </View>
-
+        <ImageBackground
+          source={require('./assets/background_1.png')}
+          resizeMode="cover"
+          style={styles.image}
+        >
       <View style={styles.buttonContainer}>
         <Button
           title="Добавить запись"
           onPress={addReception}
-          disabled={!receptionDate || !clientName || !selected}
+          disabled={!receptionDate || !clientName || selected.length < 1}
+          color={'#d10050'}
         />
       </View>
       </ImageBackground>
@@ -143,7 +155,6 @@ const styles = StyleSheet.create({
   },
   image: {
     flex: 1,
-    justifyContent: 'center',
   },
   input: {
     borderWidth: 0,
