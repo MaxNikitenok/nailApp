@@ -27,10 +27,13 @@ export const AddReception = ({ navigation }: any) => {
   if (receptionDate) {
     let d = new Date(receptionDate.toString());
     ye = new Intl.DateTimeFormat('ru', { year: 'numeric' }).format(d);
-    mo = new Intl.DateTimeFormat('ru', { month: 'long' }).format(d);
-    da = new Intl.DateTimeFormat('ru', { day: 'numeric' }).format(d);
-    ho = new Intl.DateTimeFormat('ru', { hour: 'numeric' }).format(d) + ':';
-    mi = new Intl.DateTimeFormat('ru', { minute: 'numeric' }).format(d);
+    mo = new Intl.DateTimeFormat('ru', { month: '2-digit' }).format(d);
+    da = new Intl.DateTimeFormat('ru', { day: '2-digit' }).format(d);
+    ho = new Intl.DateTimeFormat('ru', { hour: '2-digit' }).format(d);
+    mi = new Intl.DateTimeFormat('ru', { minute: '2-digit' }).format(d);
+    if (mi.length < 2) {
+      mi = `0${mi}`;
+  }
   }
 
   const showDatePicker = () => {
@@ -61,8 +64,8 @@ export const AddReception = ({ navigation }: any) => {
         .post(
           'http://192.168.0.111:4999/receptions/',
           JSON.stringify({
-            date: `${ye} ${mo} ${da}`,
-            time: `${ho}${mi}`,
+            date: `${ye}-${mo}-${da}`,
+            time: `${ho}:${mi}`,
             name: clientName,
             procedures: selected.join(', '),
           }),
@@ -110,7 +113,7 @@ export const AddReception = ({ navigation }: any) => {
           <Text style={styles.text}>Время:</Text>
           <Text onPress={showDatePicker}>
             {receptionDate ? (
-              <Text style={styles.text}>{`${ho}${mi}`}</Text>
+              <Text style={styles.text}>{`${ho}:${mi}`}</Text>
             ) : (
               <Text style={styles.pickDateTame}>Выбрать дату и время</Text>
             )}
