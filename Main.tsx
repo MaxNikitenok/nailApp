@@ -18,6 +18,13 @@ export const Main = ({ navigation }: any) => {
       </TouchableOpacity>
       <TouchableOpacity
         activeOpacity={0.8}
+        onPress={() => navigation.navigate('Calendar2')}
+        style={styles.appButtonContainer}
+      >
+        <Text style={styles.appButtonText}>Календарь2</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        activeOpacity={0.8}
         onPress={() => navigation.navigate('AddReception')}
         style={styles.appButtonContainer}
       >

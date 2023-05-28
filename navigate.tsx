@@ -1,6 +1,7 @@
 import React from 'react';
 import { Main } from './Main';
 import { Calendar } from './Calendar';
+import { Calendar2 } from './Calendar2';
 import { Day } from './Day';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
@@ -21,6 +22,11 @@ export default function Navigate() {
           name="Calendar"
           component={Calendar}
           options={{ title: 'Календарь' }}
+        />
+        <Stack.Screen
+          name="Calendar2"
+          component={Calendar2}
+          options={{ title: 'Календарь2' }}
         />
         <Stack.Screen
           name="AddReception"

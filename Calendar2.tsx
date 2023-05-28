@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, Alert, SafeAreaView } from 'react-native';
-import { Agenda, LocaleConfig } from 'react-native-calendars';
+import { Calendar, LocaleConfig } from 'react-native-calendars';
 import axios from 'axios';
+import moment from 'moment';
 
 LocaleConfig.locales['ru'] = {
   monthNames: [
@@ -54,10 +55,22 @@ type Reception = {
   procedures: string;
 };
 
-export const Calendar: React.FC = ({ navigation }: any) => {
+type Dot = {
+  key: string;
+  color: string;
+}
+
+type Dots = {
+  dots: Dot;
+}
+
+export const Calendar2: React.FC = ({ navigation }: any) => {
   const [receptions, setReceptions] = useState<{
     [key: string]: Reception[];
   }>();
+  const [markedDates, setMarkedDates] = useState<{
+    [key: string]: Dot[];
+  }>()
 
   useEffect(() => {
     const getData = async () => {
@@ -66,15 +79,15 @@ export const Calendar: React.FC = ({ navigation }: any) => {
         .then(({ data }) => {
           const reduced = data.reduce(
             (
-              acc: { [key: string]: Reception[] },
+              acc: { [key: string]: Dots },
               currentItem: { [x: string]: any; date: any }
             ) => {
               const { date, ...item } = currentItem;
 
               if (date in acc) {
-                acc[date] = [...acc[date], item as Reception];
+                acc[date] = {dots: [...acc[date].dots, {key: item._id, color: 'green'} as Dot]};
               } else {
-                acc[date] = [item as Reception];
+                acc[date] = {dots: [{key: item._id, color: 'green'} as Dot]};
               }
 
               return acc;
@@ -82,9 +95,14 @@ export const Calendar: React.FC = ({ navigation }: any) => {
             {}
           );
 
-          setReceptions(reduced);
           
-          console.log(receptions)
+          setMarkedDates(reduced);
+          // reduced.map((item: any) => {
+          //   console.log(item)
+          // })
+
+          
+          console.log(markedDates)
         })
         .catch((err) => {
           console.log(err);
@@ -95,23 +113,25 @@ export const Calendar: React.FC = ({ navigation }: any) => {
     getData();
   }, []);
 
-  const renderItem = (item: Reception) => {
-    return (
-      <View style={styles.itemContainer}>
-        <Text>
-          {item.time} {item.name}
-        </Text>
-        <Text>{item.procedures}</Text>
-      </View>
-    );
-  };
+  // const renderItem = (item: Reception) => {
+  //   return (
+  //     <View style={styles.itemContainer}>
+  //       <Text>
+  //         {item.time} {item.name}
+  //       </Text>
+  //       <Text>{item.procedures}</Text>
+  //     </View>
+  //   );
+  // };
+
+  const manicure = { key: 'manicure', color: 'green' };
 
   return (
     <SafeAreaView style={styles.safe}>
-      <Agenda
-        firstDay={1}
-        items={receptions}
-        renderItem={renderItem}
+      <Calendar
+        initialDate={moment().format('YYYY-MM-DD')}
+        markingType={'multi-dot'}
+        markedDates={markedDates}
       />
     </SafeAreaView>
   );
