@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, Alert, SafeAreaView } from 'react-native';
+import { StyleSheet, View, Text, Alert, SafeAreaView, TouchableOpacity } from 'react-native';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import axios from 'axios';
 import moment from 'moment';
@@ -64,6 +64,13 @@ type Dot = {
 type Dots = {
   dots: Dot;
 };
+
+const slots = [
+  {time: '09:00'},
+  {time: '11:30'},
+  {time: '14:00'},
+  {time: '17:00'},
+]
 
 export const Calendar2: React.FC = ({ navigation }: any) => {
   const [receptions, setReceptions] = useState<{
@@ -171,27 +178,31 @@ export const Calendar2: React.FC = ({ navigation }: any) => {
         }}
       />
 
-      {
-        <Text>{currentDate}</Text>
-      }
+      {<Text style={styles.dateHeader}>{currentDate}</Text>}
 
       {!currentDay && (
-        <View style={styles.itemContainer}>
-          <Text>
-            пусто
-          </Text>
-        </View>
+        slots.map((item)=>{
+          return (
+            <TouchableOpacity style={styles.itemContainer} onPress={()=>Alert.alert('press')} onLongPress={()=>Alert.alert('long press')} key={item.time}>
+              <Text style={styles.time}>{item.time}</Text>
+              <View style={styles.addContainer}>
+                <Text style={styles.add}>Добавить</Text>
+              </View>
+            </TouchableOpacity>
+          )
+        })
       )}
 
       {currentDay &&
         currentDay.map((item) => {
           return (
-            <View style={styles.itemContainer} key={item._id}>
-              <Text>
-                {item.time} {item.name}
-              </Text>
-              <Text>{item.procedures}</Text>
-            </View>
+            <TouchableOpacity style={styles.itemContainer} onPress={()=>Alert.alert('press')} onLongPress={()=>Alert.alert('long press')} key={item._id}>
+              <Text style={styles.time}>{item.time}</Text>
+              <View style={styles.infoContainer}>
+                <Text style={styles.name}>{item.name}</Text>
+                <Text style={styles.procedures}>{item.procedures}</Text>
+              </View>
+            </TouchableOpacity>
           );
         })}
     </SafeAreaView>
@@ -202,12 +213,46 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
   },
+  dateHeader: {
+    textAlign: 'center',
+    marginTop: 10,
+    marginBottom: 4,
+    fontSize: 20,
+  },
   itemContainer: {
+    display: 'flex',
+    flexDirection: 'row',
     backgroundColor: 'white',
     margin: 5,
     borderRadius: 15,
-    justifyContent: 'center',
-    padding: 10,
+    padding: 5,
     flex: 1,
+  },
+  addContainer: {
+    display: 'flex',
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  add: {
+
+  },
+  time: {
+    paddingLeft: 5,
+    paddingRight: 10,
+    fontSize: 18,
+    alignItems: 'center',
+    borderRightWidth: 1,
+    borderRightColor: '#999',
+  },
+  infoContainer: {
+    paddingLeft: 5,
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: '900'
+  },
+  procedures: {
+
   },
 });
