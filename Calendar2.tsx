@@ -1,8 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, Alert, SafeAreaView, TouchableOpacity } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Text,
+  Alert,
+  SafeAreaView,
+  TouchableOpacity,
+  Modal,
+  Pressable,
+  Button,
+} from 'react-native';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import axios from 'axios';
 import moment from 'moment';
+import { TextInput } from 'react-native';
+import { Select } from './components/Select';
 
 LocaleConfig.locales['ru'] = {
   monthNames: [
@@ -49,7 +61,6 @@ LocaleConfig.defaultLocale = 'ru';
 
 type Reception = {
   _id: string;
-  date: string;
   time: string;
   name: string;
   procedures: string;
@@ -66,11 +77,11 @@ type Dots = {
 };
 
 const slots = [
-  {time: '09:00'},
-  {time: '11:30'},
-  {time: '14:00'},
-  {time: '17:00'},
-]
+  { time: '09:00' },
+  { time: '11:30' },
+  { time: '14:00' },
+  { time: '17:00' },
+];
 
 export const Calendar2: React.FC = ({ navigation }: any) => {
   const [receptions, setReceptions] = useState<{
@@ -116,8 +127,6 @@ export const Calendar2: React.FC = ({ navigation }: any) => {
 
           setMarkedDates(reducedMarkedDates);
 
-          console.log(markedDates);
-
           const reduced = data.reduce(
             (
               acc: { [key: string]: Reception[] },
@@ -137,8 +146,6 @@ export const Calendar2: React.FC = ({ navigation }: any) => {
           );
 
           setReceptions(reduced);
-
-          console.log(receptions);
         })
         .catch((err) => {
           console.log(err);
@@ -149,61 +156,180 @@ export const Calendar2: React.FC = ({ navigation }: any) => {
     getData();
   }, []);
 
-  // const renderItem = (item: Reception) => {
-  //   return (
-  //     <View style={styles.itemContainer}>
-  //       <Text>
-  //         {item.time} {item.name}
-  //       </Text>
-  //       <Text>{item.procedures}</Text>
-  //     </View>
-  //   );
-  // };
+  const [modalVisible, setModalVisible] = useState(false);
+  const [clientName, onChangeClientName] = useState('');
+  const [selected, setSelected] = useState([] as string[]);
+  const [newReceptionTime, setNewReceptionTime] = useState('');
 
-  const manicure = { key: 'manicure', color: 'green' };
+  const addReception = async () => {
+    if (!clientName) {
+      Alert.alert('Введите имя клиента');
+      return;
+    }
+    try {
+      await axios
+        .post(
+          'http://192.168.0.111:4999/receptions/',
+          JSON.stringify({
+            date: currentDate,
+            time: newReceptionTime,
+            name: clientName,
+            procedures: selected.join(', '),
+          }),
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        )
+        .then((response) => {
+          Alert.alert(
+            `${response.data.name} записана на ${response.data.procedures} ${response.data.date} в ${response.data.time}`
+          );
+        });
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const onDayPressHandler = (e: any) => {
+    setCurrentDate(e.dateString);
+    receptions && setCurrentDay(receptions[e.dateString]);
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          Alert.alert('Modal has been closed.');
+          setModalVisible(!modalVisible);
+        }}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>Hello World!</Text>
+            <TextInput
+              style={styles.input}
+              onChangeText={onChangeClientName}
+              value={clientName}
+              placeholder="Введите имя клиента"
+            />
+            <View style={styles.selectItem}>
+              <Select selected={selected} setSelected={setSelected} />
+            </View>
+            <Pressable
+              style={[styles.button, styles.buttonClose]}
+              onPress={() => setModalVisible(!modalVisible)}
+            >
+              <Text style={styles.textStyle}>Hide Modal</Text>
+            </Pressable>
+            <View style={styles.buttonContainer}>
+              <Button
+                title="Добавить запись"
+                onPress={addReception}
+                disabled={!clientName || selected.length < 1}
+                color={'#d10050'}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
       <Calendar
         firstDay={1}
         initialDate={moment().format('YYYY-MM-DD')}
         markingType={'multi-dot'}
         markedDates={markedDates}
-        onDayPress={(e) => {
-          setCurrentDay(receptions ? receptions[e.dateString] : []);
-          setCurrentDate(e.dateString);
-        }}
+        onDayPress={onDayPressHandler}
         onDayLongPress={(e) => {
-          console.log(e.dateString);
+          Alert.alert(e.dateString);
         }}
       />
 
       {<Text style={styles.dateHeader}>{currentDate}</Text>}
 
-      {!currentDay && (
-        slots.map((item)=>{
+      {currentDay &&
+        slots.map((item) => {
+          const receptionInTime = currentDay.find(
+            (reception) => reception.time === item.time
+          );
+          if (receptionInTime) {
+            return (
+              <TouchableOpacity
+                style={styles.itemContainer}
+                onPress={() => Alert.alert(item.time)}
+                onLongPress={() => Alert.alert('long press')}
+                key={receptionInTime._id}
+              >
+                <Text style={styles.time}>{item.time}</Text>
+                <View style={styles.infoContainer}>
+                  <Text style={styles.name}>{receptionInTime.name}</Text>
+                  <Text style={styles.procedures}>
+                    {receptionInTime.procedures}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          }
+
           return (
-            <TouchableOpacity style={styles.itemContainer} onPress={()=>Alert.alert('press')} onLongPress={()=>Alert.alert('long press')} key={item.time}>
+            <TouchableOpacity
+              style={styles.itemContainer}
+              onPress={() => {
+                setModalVisible(!modalVisible);
+                setNewReceptionTime(item.time);
+              }}
+              onLongPress={() => Alert.alert(item.time)}
+              key={item.time}
+            >
               <Text style={styles.time}>{item.time}</Text>
               <View style={styles.addContainer}>
                 <Text style={styles.add}>Добавить</Text>
               </View>
             </TouchableOpacity>
-          )
-        })
-      )}
+          );
+        })}
 
-      {currentDay &&
-        currentDay.map((item) => {
+      {!currentDay &&
+        slots.map((item) => {
           return (
-            <TouchableOpacity style={styles.itemContainer} onPress={()=>Alert.alert('press')} onLongPress={()=>Alert.alert('long press')} key={item._id}>
+            <TouchableOpacity
+              style={styles.itemContainer}
+              onPress={() => {
+                setModalVisible(!modalVisible);
+                setNewReceptionTime(item.time);
+              }}
+              onLongPress={() => Alert.alert(item.time)}
+              key={item.time}
+            >
               <Text style={styles.time}>{item.time}</Text>
-              <View style={styles.infoContainer}>
-                <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.procedures}>{item.procedures}</Text>
+              <View style={styles.addContainer}>
+                <Text style={styles.add}>Добавить</Text>
               </View>
             </TouchableOpacity>
           );
+        })}
+
+      {currentDay &&
+        currentDay.map((item) => {
+          if (slots.every((slot) => slot.time !== item.time))
+            return (
+              <TouchableOpacity
+                style={styles.itemContainer}
+                onPress={() => Alert.alert(item.time)}
+                onLongPress={() => Alert.alert('long press')}
+                key={item._id}
+              >
+                <Text style={styles.time}>{item.time}</Text>
+                <View style={styles.infoContainer}>
+                <Text>доп. запись</Text>
+                  <Text style={styles.name}>{item.name}</Text>
+                  <Text style={styles.procedures}>{item.procedures}</Text>
+                </View>
+              </TouchableOpacity>
+            );
         })}
     </SafeAreaView>
   );
@@ -234,9 +360,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  add: {
-
-  },
+  add: {},
   time: {
     paddingLeft: 5,
     paddingRight: 10,
@@ -250,9 +374,65 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 16,
-    fontWeight: '900'
+    fontWeight: '900',
   },
-  procedures: {
+  procedures: {},
 
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 22,
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  button: {
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+  },
+  buttonOpen: {
+    backgroundColor: '#F194FF',
+  },
+  buttonClose: {
+    backgroundColor: '#2196F3',
+  },
+  textStyle: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+
+  input: {
+    borderWidth: 0,
+    paddingLeft: 5,
+    fontSize: 18,
+  },
+  selectItem: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignContent: 'center',
+    gap: 5,
+  },
+  buttonContainer: {
+    flex: 0.5,
+    justifyContent: 'center',
   },
 });
