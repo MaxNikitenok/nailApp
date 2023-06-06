@@ -95,64 +95,63 @@ export const Calendar2: React.FC = ({ navigation }: any) => {
 
   const [currentDate, setCurrentDate] = useState('');
 
+  const getData = async () => {
+    await axios
+      .get('http://192.168.0.111:4999/receptions')
+      .then(({ data }) => {
+        const reducedMarkedDates = data.reduce(
+          (
+            acc: { [key: string]: Dots },
+            currentItem: { [x: string]: any; date: string }
+          ) => {
+            const { date, ...item } = currentItem;
+
+            if (date in acc) {
+              acc[date] = {
+                dots: acc[date].dots.concat({
+                  key: item._id,
+                  color: 'green',
+                } as Dot),
+              } as unknown as Dots;
+            } else {
+              acc[date] = {
+                dots: [{ key: item._id, color: 'green' } as Dot],
+              } as unknown as Dots;
+            }
+
+            return acc;
+          },
+          {}
+        );
+
+        setMarkedDates(reducedMarkedDates);
+
+        const reduced = data.reduce(
+          (
+            acc: { [key: string]: Reception[] },
+            currentItem: { [x: string]: any; date: any }
+          ) => {
+            const { date, ...item } = currentItem;
+
+            if (date in acc) {
+              acc[date] = [...acc[date], item as Reception];
+            } else {
+              acc[date] = [item as Reception];
+            }
+
+            return acc;
+          },
+          {}
+        );
+
+        setReceptions(reduced);
+      })
+      .catch((err) => {
+        console.log(err);
+        Alert.alert('Ошибка', 'Ошибка получения');
+      });
+  };
   useEffect(() => {
-    const getData = async () => {
-      await axios
-        .get('http://192.168.0.111:4999/receptions')
-        .then(({ data }) => {
-          const reducedMarkedDates = data.reduce(
-            (
-              acc: { [key: string]: Dots },
-              currentItem: { [x: string]: any; date: string }
-            ) => {
-              const { date, ...item } = currentItem;
-
-              if (date in acc) {
-                acc[date] = {
-                  dots: acc[date].dots.concat({
-                    key: item._id,
-                    color: 'green',
-                  } as Dot),
-                } as unknown as Dots;
-              } else {
-                acc[date] = {
-                  dots: [{ key: item._id, color: 'green' } as Dot],
-                } as unknown as Dots;
-              }
-
-              return acc;
-            },
-            {}
-          );
-
-          setMarkedDates(reducedMarkedDates);
-
-          const reduced = data.reduce(
-            (
-              acc: { [key: string]: Reception[] },
-              currentItem: { [x: string]: any; date: any }
-            ) => {
-              const { date, ...item } = currentItem;
-
-              if (date in acc) {
-                acc[date] = [...acc[date], item as Reception];
-              } else {
-                acc[date] = [item as Reception];
-              }
-
-              return acc;
-            },
-            {}
-          );
-
-          setReceptions(reduced);
-        })
-        .catch((err) => {
-          console.log(err);
-          Alert.alert('Ошибка', 'Ошибка получения');
-        });
-    };
-
     getData();
   }, []);
 
@@ -183,6 +182,8 @@ export const Calendar2: React.FC = ({ navigation }: any) => {
           }
         )
         .then((response) => {
+          setCurrentDay(currentDay ? [...currentDay, response.data] : [response.data]);
+          getData();
           Alert.alert(
             `${response.data.name} записана на ${response.data.procedures} ${response.data.date} в ${response.data.time}`
           );
@@ -190,6 +191,16 @@ export const Calendar2: React.FC = ({ navigation }: any) => {
     } catch (e) {
       console.log(e);
     }
+  };
+  const deleteReception = async (id: string) => {
+    await axios
+      .delete(`http://192.168.0.111:4999/receptions/${id}`)
+      .then((response) => {
+        setCurrentDay(
+          currentDay.filter((reception) => reception._id !== response.data._id)
+        );
+        getData();
+      });
   };
 
   const onDayPressHandler = (e: any) => {
@@ -260,7 +271,7 @@ export const Calendar2: React.FC = ({ navigation }: any) => {
               <TouchableOpacity
                 style={styles.itemContainer}
                 onPress={() => Alert.alert(item.time)}
-                onLongPress={() => Alert.alert('long press')}
+                onLongPress={() => deleteReception(receptionInTime._id)}
                 key={receptionInTime._id}
               >
                 <Text style={styles.time}>{item.time}</Text>
@@ -301,7 +312,9 @@ export const Calendar2: React.FC = ({ navigation }: any) => {
                 setModalVisible(!modalVisible);
                 setNewReceptionTime(item.time);
               }}
-              onLongPress={() => Alert.alert(item.time)}
+              onLongPress={() =>
+                console.log({ ...markedDates, '2023-06-09': { dots: [] } })
+              }
               key={item.time}
             >
               <Text style={styles.time}>{item.time}</Text>
@@ -317,14 +330,14 @@ export const Calendar2: React.FC = ({ navigation }: any) => {
           if (slots.every((slot) => slot.time !== item.time))
             return (
               <TouchableOpacity
-                style={styles.itemContainer}
+                style={styles.extraItemContainer}
                 onPress={() => Alert.alert(item.time)}
-                onLongPress={() => Alert.alert('long press')}
+                onLongPress={() => deleteReception(item._id)}
                 key={item._id}
               >
                 <Text style={styles.time}>{item.time}</Text>
                 <View style={styles.infoContainer}>
-                <Text>доп. запись</Text>
+                  <Text>доп. запись</Text>
                   <Text style={styles.name}>{item.name}</Text>
                   <Text style={styles.procedures}>{item.procedures}</Text>
                 </View>
@@ -349,6 +362,15 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     backgroundColor: 'white',
+    margin: 5,
+    borderRadius: 15,
+    padding: 5,
+    flex: 1,
+  },
+  extraItemContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    backgroundColor: '#ff337750',
     margin: 5,
     borderRadius: 15,
     padding: 5,
