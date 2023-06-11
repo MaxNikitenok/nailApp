@@ -86,9 +86,11 @@ export const Select = ({selected, setSelected}: any) => {
 
 const styles = StyleSheet.create({
   container: {
+    width: '100%',
   },
   dropdown: {
     height: 50,
+    width: 300,
     padding: 12,
   },
   placeholderStyle: {

@@ -6,15 +6,14 @@ import {
   Alert,
   SafeAreaView,
   TouchableOpacity,
-  Modal,
-  Pressable,
-  Button,
 } from 'react-native';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import axios from 'axios';
 import moment from 'moment';
-import { TextInput } from 'react-native';
-import { Select } from './components/Select';
+import { AddReceptionModal } from './components/AddReceptionModal';
+import { EmptySlot } from './components/EmptySlot';
+import { SlotWithReception } from './components/slotWithReception';
+import { SlotWithExtraReception } from './components/SlotWithExtaReception';
 
 LocaleConfig.locales['ru'] = {
   monthNames: [
@@ -182,7 +181,9 @@ export const Calendar2: React.FC = ({ navigation }: any) => {
           }
         )
         .then((response) => {
-          setCurrentDay(currentDay ? [...currentDay, response.data] : [response.data]);
+          setCurrentDay(
+            currentDay ? [...currentDay, response.data] : [response.data]
+          );
           getData();
           Alert.alert(
             `${response.data.name} записана на ${response.data.procedures} ${response.data.date} в ${response.data.time}`
@@ -210,44 +211,15 @@ export const Calendar2: React.FC = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => {
-          Alert.alert('Modal has been closed.');
-          setModalVisible(!modalVisible);
-        }}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalText}>Hello World!</Text>
-            <TextInput
-              style={styles.input}
-              onChangeText={onChangeClientName}
-              value={clientName}
-              placeholder="Введите имя клиента"
-            />
-            <View style={styles.selectItem}>
-              <Select selected={selected} setSelected={setSelected} />
-            </View>
-            <Pressable
-              style={[styles.button, styles.buttonClose]}
-              onPress={() => setModalVisible(!modalVisible)}
-            >
-              <Text style={styles.textStyle}>Hide Modal</Text>
-            </Pressable>
-            <View style={styles.buttonContainer}>
-              <Button
-                title="Добавить запись"
-                onPress={addReception}
-                disabled={!clientName || selected.length < 1}
-                color={'#d10050'}
-              />
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <AddReceptionModal
+        modalVisible={modalVisible}
+        setModalVisible={setModalVisible}
+        clientName={clientName}
+        onChangeClientName={onChangeClientName}
+        selected={selected}
+        setSelected={setSelected}
+        addReception={addReception}
+      />
       <Calendar
         firstDay={1}
         initialDate={moment().format('YYYY-MM-DD')}
@@ -262,66 +234,42 @@ export const Calendar2: React.FC = ({ navigation }: any) => {
       {<Text style={styles.dateHeader}>{currentDate}</Text>}
 
       {currentDay &&
+        currentDate &&
         slots.map((item) => {
           const receptionInTime = currentDay.find(
             (reception) => reception.time === item.time
           );
           if (receptionInTime) {
             return (
-              <TouchableOpacity
-                style={styles.itemContainer}
-                onPress={() => Alert.alert(item.time)}
-                onLongPress={() => deleteReception(receptionInTime._id)}
+              <SlotWithReception
+                item={item}
+                receptionInTime={receptionInTime}
+                deleteReception={deleteReception}
                 key={receptionInTime._id}
-              >
-                <Text style={styles.time}>{item.time}</Text>
-                <View style={styles.infoContainer}>
-                  <Text style={styles.name}>{receptionInTime.name}</Text>
-                  <Text style={styles.procedures}>
-                    {receptionInTime.procedures}
-                  </Text>
-                </View>
-              </TouchableOpacity>
+              />
             );
           }
-
           return (
-            <TouchableOpacity
-              style={styles.itemContainer}
-              onPress={() => {
-                setModalVisible(!modalVisible);
-                setNewReceptionTime(item.time);
-              }}
-              onLongPress={() => Alert.alert(item.time)}
+            <EmptySlot
+              item={item}
+              modalVisible={modalVisible}
+              setModalVisible={setModalVisible}
+              setNewReceptionTime={setNewReceptionTime}
               key={item.time}
-            >
-              <Text style={styles.time}>{item.time}</Text>
-              <View style={styles.addContainer}>
-                <Text style={styles.add}>Добавить</Text>
-              </View>
-            </TouchableOpacity>
+            />
           );
         })}
 
       {!currentDay &&
         slots.map((item) => {
           return (
-            <TouchableOpacity
-              style={styles.itemContainer}
-              onPress={() => {
-                setModalVisible(!modalVisible);
-                setNewReceptionTime(item.time);
-              }}
-              onLongPress={() =>
-                console.log({ ...markedDates, '2023-06-09': { dots: [] } })
-              }
+            <EmptySlot
+              item={item}
+              modalVisible={modalVisible}
+              setModalVisible={setModalVisible}
+              setNewReceptionTime={setNewReceptionTime}
               key={item.time}
-            >
-              <Text style={styles.time}>{item.time}</Text>
-              <View style={styles.addContainer}>
-                <Text style={styles.add}>Добавить</Text>
-              </View>
-            </TouchableOpacity>
+            />
           );
         })}
 
@@ -329,19 +277,11 @@ export const Calendar2: React.FC = ({ navigation }: any) => {
         currentDay.map((item) => {
           if (slots.every((slot) => slot.time !== item.time))
             return (
-              <TouchableOpacity
-                style={styles.extraItemContainer}
-                onPress={() => Alert.alert(item.time)}
-                onLongPress={() => deleteReception(item._id)}
+              <SlotWithExtraReception
+                item={item}
+                deleteReception={deleteReception}
                 key={item._id}
-              >
-                <Text style={styles.time}>{item.time}</Text>
-                <View style={styles.infoContainer}>
-                  <Text>доп. запись</Text>
-                  <Text style={styles.name}>{item.name}</Text>
-                  <Text style={styles.procedures}>{item.procedures}</Text>
-                </View>
-              </TouchableOpacity>
+              />
             );
         })}
     </SafeAreaView>
@@ -399,62 +339,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   procedures: {},
-
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 22,
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 35,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  button: {
-    borderRadius: 20,
-    padding: 10,
-    elevation: 2,
-  },
   buttonOpen: {
     backgroundColor: '#F194FF',
-  },
-  buttonClose: {
-    backgroundColor: '#2196F3',
-  },
-  textStyle: {
-    color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  modalText: {
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-
-  input: {
-    borderWidth: 0,
-    paddingLeft: 5,
-    fontSize: 18,
-  },
-  selectItem: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignContent: 'center',
-    gap: 5,
-  },
-  buttonContainer: {
-    flex: 0.5,
-    justifyContent: 'center',
   },
 });
